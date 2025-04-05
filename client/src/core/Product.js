@@ -41,14 +41,14 @@ const Product = (props) => {
     >
       <div className='row'>
         <div className='col-md-2'></div>
-        <div className='col-md-4 col-sm-12'>
+        <div className='col-md-5 col-sm-12'>
           <h4>Product Details</h4>
           {product && product.description && (
             <Card product={product} showViewProductButton={false} />
           )}
         </div>
 
-        <div className='col-md-4'>
+        <div className='col-md-3 '>
           <h4>Related products</h4>
           {relatedProduct.map((p, i) => (
             <div className='mb-3' key={i}>

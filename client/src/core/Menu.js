@@ -38,11 +38,31 @@ const useStyles = makeStyles((theme) => ({
     flexGrow: 1,
   },
   menuButton: {
-    marginRight: theme.spacing(2),
+    marginRight: theme.spacing(4),
+    fontSize: '1.5rem',
   },
   title: {
+    fontSize: '1.8rem',
     [theme.breakpoints.up('sm')]: {
       display: 'block',
+    },
+  },
+  appBar: {
+    padding: theme.spacing(1.3), 
+  },
+  iconButton: {
+    fontSize: '2rem', 
+  },
+  sectionDesktop: {
+    display: 'none',
+    [theme.breakpoints.up('md')]: {
+      display: 'flex',
+    },
+  },
+  sectionMobile: {
+    display: 'flex',
+    [theme.breakpoints.up('md')]: {
+      display: 'none',
     },
   },
   search: {
@@ -74,24 +94,11 @@ const useStyles = makeStyles((theme) => ({
   },
   inputInput: {
     padding: theme.spacing(1, 1, 1, 0),
-    // vertical padding + font size from searchIcon
     paddingLeft: `calc(1em + ${theme.spacing(4)}px)`,
     transition: theme.transitions.create('width'),
     width: '100%',
     [theme.breakpoints.up('md')]: {
       width: '20ch',
-    },
-  },
-  sectionDesktop: {
-    display: 'none',
-    [theme.breakpoints.up('md')]: {
-      display: 'flex',
-    },
-  },
-  sectionMobile: {
-    display: 'flex',
-    [theme.breakpoints.up('md')]: {
-      display: 'none',
     },
   },
 }));
@@ -104,9 +111,9 @@ const MaterialAppBar = ({ history }) => {
   const isMenuOpen = Boolean(anchorEl);
   const isMobileMenuOpen = Boolean(mobileMoreAnchorEl);
 
-  const handleProfileMenuOpen = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
+  // const handleProfileMenuOpen = (event) => {
+  //   setAnchorEl(event.currentTarget);
+  // };
 
   const handleMobileMenuClose = () => {
     setMobileMoreAnchorEl(null);
@@ -249,9 +256,30 @@ const MaterialAppBar = ({ history }) => {
     </Menu>
   );
 
+  const getPageName = (pathname) => {
+    switch (pathname) {
+      case '/':
+        return 'Home';
+      case '/shop':
+        return 'Shop';
+      case '/cart':
+        return 'Cart';
+      case '/user/dashboard':
+        return 'User Dashboard';
+      case '/admin/dashboard':
+        return 'Admin Dashboard';
+      case '/signin':
+        return 'Signin';
+      case '/signup':
+        return 'Signup';
+      default:
+        return '';
+    }
+  };
+
   return (
     <div className={classes.grow}>
-      <AppBar position='fixed'>
+      <AppBar position='fixed' className={classes.appBar}>
         <Toolbar>
           <a href='/' style={{ color: '#ffffff' }}>
             <IconButton
@@ -260,12 +288,12 @@ const MaterialAppBar = ({ history }) => {
               color='inherit'
               aria-label='brand'
             >
-              <StoreIcon />
+              <StoreIcon className={classes.iconButton}/>
             </IconButton>
           </a>
           <a href='/' style={{ color: '#ffffff', textDecoration: 'none' }}>
             <Typography className={classes.title} variant='h6' noWrap>
-              BRAND
+            {getPageName(history.location.pathname)}
             </Typography>
           </a>
 
@@ -360,7 +388,7 @@ const MaterialAppBar = ({ history }) => {
               onClick={handleMobileMenuOpen}
               color='inherit'
             >
-              <MoreIcon />
+              <MoreIcon className={classes.iconButton}/>
             </IconButton>
           </div>
         </Toolbar>

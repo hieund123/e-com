@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import Button from '@material-ui/core/Button';
 import {
-  getProducts,
+  // getProducts,
   getBraintreeClientToken,
   processPayment,
   createOrder,
 } from './apiCore';
 import { emptyCart } from './cartHelpers';
-import Card from './Card';
+// import Card from './Card';
 import { isAuthenticated } from '../auth';
 import { Link } from 'react-router-dom';
 import DropIn from 'braintree-web-drop-in-react';
@@ -39,7 +39,7 @@ const Checkout = ({ products, setRun = (f) => f, run = undefined }) => {
 
   useEffect(() => {
     getToken(userId, token);
-  }, []);
+  }, [userId, token]);
 
   const handleAddress = (event) => {
     setData({ ...data, address: event.target.value });
