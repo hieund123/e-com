@@ -1,27 +1,45 @@
-import React, { useState, useEffect } from 'react';
-import Button from '@material-ui/core/Button';
+import React, { useState, useEffect } from "react";
+import Button from "@material-ui/core/Button";
 import {
   // getProducts,
   getBraintreeClientToken,
   processPayment,
   createOrder,
-} from './apiCore';
-import { emptyCart } from './cartHelpers';
+  readUser,
+} from "./apiCore";
+import { emptyCart } from "./cartHelpers";
 // import Card from './Card';
-import { isAuthenticated } from '../auth';
-import { Link } from 'react-router-dom';
-import DropIn from 'braintree-web-drop-in-react';
+import { isAuthenticated } from "../auth";
+import { Link } from "react-router-dom";
+import DropIn from "braintree-web-drop-in-react";
 
+const loadUserData = async (setData, userId, token) => {
+  try {
+    const userData = await readUser(userId, token);
+    console.log("User data from API:", userData);
+    if (userData) {
+      setData((prevData) => ({
+        ...prevData,
+        address: userData.address || "",
+        phone: userData.phone || "", // Load phone từ user data
+      }));
+    }
+  } catch (err) {
+    console.log("Lỗi khi lấy thông tin người dùng:", err);
+  }
+};
 const Checkout = ({ products, setRun = (f) => f, run = undefined }) => {
   const [data, setData] = useState({
     loading: false,
     success: false,
     clientToken: null,
-    error: '',
+    error: "",
     instance: {},
-    address: '',
+    address: "",
+    phone: "",
+    addressLoading: true,
   });
-
+  const [isEditingAddress, setIsEditingAddress] = useState(false);
   const userId = isAuthenticated() && isAuthenticated().user._id;
   const token = isAuthenticated() && isAuthenticated().token;
 
@@ -29,22 +47,27 @@ const Checkout = ({ products, setRun = (f) => f, run = undefined }) => {
     getBraintreeClientToken(userId, token).then((data) => {
       if (data.error) {
         console.log(data.error);
-        setData({ ...data, error: data.error });
+        setData((prevData) => ({ ...prevData, error: data.error }));
       } else {
         console.log(data);
-        setData({ clientToken: data.clientToken });
+        setData((prevData) => ({ ...prevData, clientToken: data.clientToken }));
       }
     });
   };
-
-  useEffect(() => {
-    getToken(userId, token);
-  }, [userId, token]);
-
   const handleAddress = (event) => {
-    setData({ ...data, address: event.target.value });
+    const address = event.target.value;
+    setData((prevData) => ({
+      ...prevData,
+      address: address,
+    }));
   };
-
+  const handlePhone = (event) => {
+    const phone = event.target.value;
+    setData((prevData) => ({
+      ...prevData,
+      phone: phone,
+    }));
+  };
   const getTotal = () => {
     return products.reduce((currentValue, nextValue) => {
       return currentValue + nextValue.count * nextValue.price;
@@ -55,56 +78,72 @@ const Checkout = ({ products, setRun = (f) => f, run = undefined }) => {
     return isAuthenticated() ? (
       <div>{showDropIn()}</div>
     ) : (
-      <Link to='/signin'>
-        <Button variant='contained' color='primary'>
+      <Link to="/signin">
+        <Button variant="contained" color="primary">
           Sign in to checkout
         </Button>
       </Link>
     );
   };
 
-  let deliveryAddress = data.address;
+  useEffect(() => {
+    if (userId && token) {
+      getToken(userId, token);
+      loadUserData(setData, userId, token); // Truyền userId và token
+    }
+  }, [userId, token]);
 
   const buy = () => {
-    setData({ loading: true });
-    // send the nonce to your server
-    // nonce = data.instance.requestPaymentMethod()
+    if (!data.address || !data.address.trim()) {
+      setData((prevData) => ({
+        ...prevData,
+        error: "Vui lòng nhập địa chỉ giao hàng",
+      }));
+      return;
+    }
+    if (!data.phone || !data.phone.trim()) {
+      setData((prevData) => ({
+        ...prevData,
+        error: "Vui lòng nhập số điện thoại",
+      }));
+      return;
+    }
+
+    setData((prevData) => ({ ...prevData, loading: true }));
+
     let nonce;
-    let getNonce = data.instance
+    data.instance
       .requestPaymentMethod()
-      .then((data) => {
-        // console.log(data);
-        nonce = data.nonce;
-        // once you have nonce (card type, card number) send nonce as 'paymentMethodNonce'
-        // and also total to be charged
-        // console.log(
-        //     "send nonce and total to process: ",
-        //     nonce,
-        //     getTotal(products)
-        // );
-        const paymentData = {
+      .then((paymentData) => {
+        // Đổi tên biến để tránh conflict
+        nonce = paymentData.nonce;
+        const paymentRequestData = {
           paymentMethodNonce: nonce,
           amount: getTotal(products),
         };
 
-        processPayment(userId, token, paymentData)
+        processPayment(userId, token, paymentRequestData)
           .then((response) => {
-            console.log(response);
-            // empty cart
-            // create order
-
             const createOrderData = {
               products: products,
               transaction_id: response.transaction.id,
               amount: response.transaction.amount,
-              address: deliveryAddress,
+              address: data.address,
+              phone: data.phone,
             };
+
+            // Debug: In ra data trước khi gửi
+            console.log("Data gửi đi:", createOrderData);
+            console.log("Products:", products);
+            console.log("Address:", data.address);
+            console.log("Phone:", data.phone);
 
             createOrder(userId, token, createOrderData)
               .then((response) => {
+                console.log("Response từ server:", response);
                 emptyCart(() => {
-                  setRun(!run); // run useEffect in parent Cart
-                  console.log('payment success and empty cart');
+                  setRun(!run);
+                  console.log("payment success and empty cart");
                   setData({
                     loading: false,
                     success: true,
@@ -112,45 +151,78 @@ const Checkout = ({ products, setRun = (f) => f, run = undefined }) => {
                 });
               })
               .catch((error) => {
-                console.log(error);
-                setData({ loading: false });
+                console.log("Lỗi create order:", error);
+                setData((prevData) => ({ ...prevData, loading: false }));
               });
           })
           .catch((error) => {
-            console.log(error);
-            setData({ loading: false });
+            console.log("Lỗi payment:", error);
+            setData((prevData) => ({ ...prevData, loading: false }));
           });
       })
       .catch((error) => {
-        // console.log("dropin error: ", error);
-        setData({ ...data, error: error.message });
+        console.log("Lỗi request payment:", error);
+        setData((prevData) => ({ ...prevData, error: error.message }));
       });
   };
 
   const showDropIn = () => (
-    <div onBlur={() => setData({ ...data, error: '' })}>
+    <div onBlur={() => setData((prevData) => ({ ...prevData, error: "" }))}>
       {data.clientToken !== null && products.length > 0 ? (
         <div>
-          <div className='gorm-group mb-3'>
-            <label className='text-muted'>Delivery address:</label>
+          <div className="form-group mb-3">
+            <label className="text-muted">Địa chỉ giao hàng:</label>
             <textarea
               onChange={handleAddress}
-              className='form-control'
+              className="form-control"
               value={data.address}
-              placeholder='Type your delivery address here...'
+              disabled={!isEditingAddress}
             />
           </div>
+
+          <div className="form-group mb-3">
+            <label className="text-muted">Số điện thoại:</label>
+            <input
+              type="tel"
+              onChange={handlePhone}
+              className="form-control"
+              value={data.phone}
+              disabled={!isEditingAddress}
+              placeholder="Nhập số điện thoại"
+            />
+          </div>
+
+          {!isEditingAddress ? (
+            <Button
+              variant="outlined"
+              color="primary"
+              size="small"
+              style={{ marginTop: "10px" }}
+              onClick={() => setIsEditingAddress(true)}
+            >
+              Chỉnh sửa thông tin
+            </Button>
+          ) : (
+            <Button
+              variant="contained"
+              color="primary"
+              size="small"
+              style={{ marginTop: "10px" }}
+              onClick={() => setIsEditingAddress(false)}
+            >
+              Lưu
+            </Button>
+          )}
 
           <DropIn
             options={{
               authorization: data.clientToken,
-              paypal: {
-                flow: 'vault',
-              },
             }}
-            onInstance={(instance) => (data.instance = instance)}
+            onInstance={(instance) =>
+              setData((prevData) => ({ ...prevData, instance }))
+            }
           />
-          <button onClick={buy} className='btn btn-success btn-block'>
+          <button onClick={buy} className="btn btn-success btn-block">
             Pay
           </button>
         </div>
@@ -160,8 +232,8 @@ const Checkout = ({ products, setRun = (f) => f, run = undefined }) => {
 
   const showError = (error) => (
     <div
-      className='alert alert-danger'
-      style={{ display: error ? '' : 'none' }}
+      className="alert alert-danger"
+      style={{ display: error ? "" : "none" }}
     >
       {error}
     </div>
@@ -169,15 +241,15 @@ const Checkout = ({ products, setRun = (f) => f, run = undefined }) => {
 
   const showSuccess = (success) => (
     <div
-      className='alert alert-info'
-      style={{ display: success ? '' : 'none' }}
+      className="alert alert-info"
+      style={{ display: success ? "" : "none" }}
     >
       Thanks! Your payment was successful!
     </div>
   );
 
   const showLoading = (loading) =>
-    loading && <h2 className='text-danger'>Loading...</h2>;
+    loading && <h2 className="text-danger">Loading...</h2>;
 
   return (
     <div>

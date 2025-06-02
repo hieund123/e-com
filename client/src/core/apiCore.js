@@ -1,3 +1,4 @@
+import { isAuthenticated } from '../auth';
 import { API } from '../config';
 import queryString from 'query-string';
 
@@ -119,5 +120,28 @@ export const createOrder = (userId, token, createOrderData) => {
     .then((response) => {
       return response.json();
     })
+    .catch((err) => console.log(err));
+};
+
+export const readUser = () => {
+  const auth = isAuthenticated();
+
+  if (!auth || !auth.user || !auth.token) {
+    console.error('Người dùng chưa đăng nhập hoặc thiếu thông tin xác thực.');
+    return Promise.reject('Chưa đăng nhập');
+  }
+
+  const userId = auth.user._id;
+  const token = auth.token;
+
+  return fetch(`${API}/user/${userId}`, {
+    method: 'GET',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+  })
+    .then((response) => response.json())
     .catch((err) => console.log(err));
 };

@@ -9,26 +9,34 @@ const Profile = ({ match }) => {
     name: '',
     email: '',
     password: '',
+    phone: '',
+    address: '',
     error: false,
     success: false,
   });
 
   const { token } = isAuthenticated();
-  const { name, email, password, success } = values;
+  const { name, email, password, phone, address, success } = values;
 
   const init = (userId) => {
-    // console.log(userId);
     read(userId, token).then((data) => {
       if (data.error) {
         setValues({ ...values, error: true });
       } else {
-        setValues({ ...values, name: data.name, email: data.email });
+        setValues({
+          ...values,
+          name: data.name,
+          email: data.email,
+          phone: data.phone || '',
+          address: data.address || '',
+        });
       }
     });
   };
 
   useEffect(() => {
     init(match.params.userId);
+    // eslint-disable-next-line
   }, []);
 
   const handleChange = (name) => (e) => {
@@ -37,10 +45,9 @@ const Profile = ({ match }) => {
 
   const clickSubmit = (e) => {
     e.preventDefault();
-    update(match.params.userId, token, { name, email, password }).then(
+    update(match.params.userId, token, { name, email, password, phone, address }).then(
       (data) => {
         if (data.error) {
-          // console.log(data.error);
           alert(data.error);
         } else {
           updateUser(data, () => {
@@ -48,6 +55,8 @@ const Profile = ({ match }) => {
               ...values,
               name: data.name,
               email: data.email,
+              phone: data.phone || '',
+              address: data.address || '',
               success: true,
             });
           });
@@ -62,7 +71,7 @@ const Profile = ({ match }) => {
     }
   };
 
-  const profileUpdate = (name, email, password) => (
+  const profileUpdate = (name, email, password, phone, address) => (
     <form>
       <div className='form-group'>
         <label className='text-muted'>Name</label>
@@ -80,6 +89,7 @@ const Profile = ({ match }) => {
           onChange={handleChange('email')}
           className='form-control'
           value={email}
+          readOnly
         />
       </div>
       <div className='form-group'>
@@ -91,7 +101,24 @@ const Profile = ({ match }) => {
           value={password}
         />
       </div>
-
+      <div className='form-group'>
+        <label className='text-muted'>Phone</label>
+        <input
+          type='text'
+          onChange={handleChange('phone')}
+          className='form-control'
+          value={phone}
+        />
+      </div>
+      <div className='form-group'>
+        <label className='text-muted'>Address</label>
+        <input
+          type='text'
+          onChange={handleChange('address')}
+          className='form-control'
+          value={address}
+        />
+      </div>
       <button onClick={clickSubmit} className='btn btn-primary'>
         Submit
       </button>
@@ -105,7 +132,7 @@ const Profile = ({ match }) => {
       className='container-fluid'
     >
       <h2 className='mb-4'>Profile update</h2>
-      {profileUpdate(name, email, password)}
+      {profileUpdate(name, email, password, phone, address)}
       {redirectUser(success)}
     </Layout>
   );
