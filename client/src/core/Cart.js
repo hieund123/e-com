@@ -43,7 +43,7 @@ const Cart = () => {
   return (
     <Layout
       title='Shopping Cart'
-      description='Manage your cart items. Checkout or continue shopping'
+      description='Quản lý các sản phẩm trong giỏ hàng của bạn. Thanh toán hoặc tiếp tục mua sắm'
       className='container-fluid'
     >
       <div className='row'>

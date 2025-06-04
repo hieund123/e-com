@@ -12,7 +12,7 @@ const Layout = ({
     <Menu />
     <div className='jumbotron mt-5'>
       <h2 className='mt-1'>{title}</h2>
-      <p className='lead'>{description}</p>
+      {description && <p className='lead'>{description}</p>}
     </div>
     <div className={className}>{children}</div>
   </div>

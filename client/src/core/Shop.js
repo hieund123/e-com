@@ -1,14 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import Layout from './Layout';
-import Button from '@material-ui/core/Button';
-import Card from './Card';
-import { getCategories, getFilteredProducts } from './apiCore';
-import Checkbox from './Checkbox';
-import RadioBox from './RadioBox';
-import { makeStyles } from '@material-ui/core/styles';
+import React, { useState, useEffect, useCallback } from "react";
+import Layout from "./Layout";
+import Button from "@material-ui/core/Button";
+import Card from "./Card";
+import { getCategories, getFilteredProducts } from "./apiCore";
+import Checkbox from "./Checkbox";
+import RadioBox from "./RadioBox";
+import { makeStyles } from "@material-ui/core/styles";
 
-import Search from './Search';
-import { prices } from './fixedPrices';
+import Search from "./Search";
+import { prices } from "./fixedPrices";
 
 const Shop = () => {
   const [myFilters, setMyFilters] = useState({
@@ -16,8 +16,8 @@ const Shop = () => {
   });
 
   const [categories, setCategories] = useState([]);
-  const [error, setError] = useState(false);
-  const [limit, setLimit] = useState(6);
+  // const [error, setError] = useState(false);
+  const [limit] = useState(6);
   const [skip, setSkip] = useState(0);
   const [size, setSize] = useState(0);
   const [filteredResults, setFilteredResults] = useState([]);
@@ -25,32 +25,34 @@ const Shop = () => {
   const init = () => {
     getCategories().then((data) => {
       if (data.error) {
-        setError(data.error);
+        // setError(data.error);
       } else {
         setCategories(data);
       }
     });
   };
 
-  const loadFilteredResults = (newFilters) => {
-    // console.log(newFilters);
-    getFilteredProducts(skip, limit, newFilters).then((data) => {
-      if (data.error) {
-        setError(data.error);
-      } else {
-        setFilteredResults(data.data);
-        setSize(data.size);
-        setSkip(0);
-      }
-    });
-  };
+  const loadFilteredResults = useCallback(
+    (newFilters) => {
+      getFilteredProducts(skip, limit, newFilters).then((data) => {
+        if (data.error) {
+          // setError(data.error);
+        } else {
+          setFilteredResults(data.data);
+          setSize(data.size);
+          setSkip(0);
+        }
+      });
+    },
+    [skip, limit]
+  );
 
   const loadMore = () => {
     let toSkip = skip + limit;
     // console.log(newFilters);
     getFilteredProducts(toSkip, limit, myFilters.filters).then((data) => {
       if (data.error) {
-        setError(data.error);
+        // setError(data.error);
       } else {
         setFilteredResults([...filteredResults, ...data.data]);
         setSize(data.size);
@@ -61,13 +63,13 @@ const Shop = () => {
 
   const useStyles = makeStyles((theme) => ({
     btn: {
-      background: 'linear-gradient(45deg, #FE6B8B 30%, #FF8E53 90%)',
+      background: "linear-gradient(45deg, #FE6B8B 30%, #FF8E53 90%)",
       borderRadius: 3,
       border: 0,
-      color: 'white',
+      color: "white",
       height: 48,
-      padding: '0 20px',
-      boxShadow: '0 3px 5px 2px rgba(255, 105, 135, .3)',
+      padding: "0 20px",
+      boxShadow: "0 3px 5px 2px rgba(255, 105, 135, .3)",
     },
   }));
 
@@ -80,7 +82,7 @@ const Shop = () => {
         // <button onClick={loadMore} className='btn btn-warning mb-5'>
         //   Load more
         // </button>
-        <Button onClick={loadMore} variant='contained' className={classes.btn}>
+        <Button onClick={loadMore} variant="contained" className={classes.btn}>
           Load more
         </Button>
       )
@@ -89,14 +91,14 @@ const Shop = () => {
 
   useEffect(() => {
     init();
-    loadFilteredResults(skip, limit, myFilters.filters);
-  }, []);
+    loadFilteredResults(myFilters.filters);
+  }, [loadFilteredResults, myFilters.filters]);
 
   const handleFilters = (filters, filterBy) => {
     const newFilters = { ...myFilters };
     newFilters.filters[filterBy] = filters || [];
 
-    if (filterBy === 'price') {
+    if (filterBy === "price") {
       let priceValues = handlePrice(filters);
       newFilters.filters[filterBy] = priceValues;
     }
@@ -118,35 +120,35 @@ const Shop = () => {
 
   return (
     <Layout
-      title='Shop page'
-      description='Search and find items of your choice'
-      className='container-fluid'
+      title="Shop page"
+      description="Tìm kiếm và khám phá những sản phẩm bạn yêu thích"
+      className="container-fluid"
     >
       <Search />
-      <div className='row'>
-        <div className='col-md-3'>
-          <h4>Filter by categories</h4>
+      <div className="row">
+        <div className="col-md-3">
+          <h4>Lọc theo categories</h4>
           <ul>
             <Checkbox
               categories={categories}
-              handleFilters={(filters) => handleFilters(filters, 'category')}
+              handleFilters={(filters) => handleFilters(filters, "category")}
             />
           </ul>
 
-          <h4>Filter by price range</h4>
+          <h4>Lọc theo giá</h4>
           <div>
             <RadioBox
               prices={prices}
-              handleFilters={(filters) => handleFilters(filters, 'price')}
+              handleFilters={(filters) => handleFilters(filters, "price")}
             />
           </div>
         </div>
 
-        <div className='col-md-9'>
-          <h2 className='mb-2'>Products</h2>
-          <div className='row'>
+        <div className="col-md-9">
+          <h2 className="mb-2">Products</h2>
+          <div className="row">
             {filteredResults.map((product, i) => (
-              <div key={i} className='col-xl-4 col-lg-6 col-md-12 col-sm-12'>
+              <div key={i} className="col-xl-4 col-lg-6 col-md-12 col-sm-12">
                 <Card product={product} />
               </div>
             ))}

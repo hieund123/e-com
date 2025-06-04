@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import Layout from './Layout';
-import { read, listRelated } from './apiCore';
-import Card from './Card';
+import React, { useState, useEffect } from "react";
+import Layout from "./Layout";
+import { read, listRelated } from "./apiCore";
+import Card from "./Card";
 
 const Product = (props) => {
   const [product, setProduct] = useState({});
@@ -34,29 +34,27 @@ const Product = (props) => {
   return (
     <Layout
       title={product && product.name}
-      description={
-        product && product.description && product.description.substring(0, 100)
-      }
-      className='container-fluid'
+      description={null}
+      className="container-fluid"
     >
-      <div className='row'>
-        <div className='col-md-2'></div>
-        <div className='col-md-5 col-sm-12'>
+      <div className="row">
+        <div className="col-md-2"></div>
+        <div className="col-md-5 col-sm-12">
           <h4>Product Details</h4>
+          {error && <div className="alert alert-danger">{error}</div>}
           {product && product.description && (
             <Card product={product} showViewProductButton={false} />
           )}
         </div>
-
-        <div className='col-md-3 '>
+        <div className="col-md-3 ">
           <h4>Related products</h4>
           {relatedProduct.map((p, i) => (
-            <div className='mb-3' key={i}>
+            <div className="mb-3" key={i}>
               <Card product={p} />
             </div>
           ))}
         </div>
-        <div className='col-md-2'></div>
+        <div className="col-md-2"></div>
       </div>
     </Layout>
   );

@@ -8,12 +8,10 @@ import 'fontsource-roboto';
 const Home = () => {
   const [productsBySell, setProductsBySell] = useState([]);
   const [productsByArrival, setProductsByArrival] = useState([]);
-  const [error, setError] = useState([]);
 
   const loadProductsBySell = () => {
     getProducts('sold').then((data) => {
       if (data.error) {
-        setError(data.error);
       } else {
         setProductsBySell(data);
       }
@@ -23,7 +21,6 @@ const Home = () => {
   const loadProductsByArrival = () => {
     getProducts('createdAt').then((data) => {
       if (data.error) {
-        setError(data.error);
       } else {
         setProductsByArrival(data);
       }
@@ -38,7 +35,7 @@ const Home = () => {
   return (
     <Layout
       title='Home page'
-      description=''
+      description='Khám phá các sản phẩm mới và bán chạy nhất ngay hôm nay'
       className='container-fluid'
     >
       <Search />
